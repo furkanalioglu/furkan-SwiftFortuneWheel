@@ -493,6 +493,7 @@ public extension SwiftFortuneWheel {
                 if addAnimation == false {
                     completion?(finished)
                 } else {
+                    self.slices[_index].backgroundColor = animationColor
                     self.animateOpacityChanges(for: _index) {
                         self.slices[_index].backgroundColor = animationColor
                         completion?(finished)
