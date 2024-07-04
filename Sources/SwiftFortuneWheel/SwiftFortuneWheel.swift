@@ -484,15 +484,41 @@ public extension SwiftFortuneWheel {
     ///   - continuousRotationTime: Full rotation time in seconds before stops
     ///   - continuousRotationSpeed: Rotation speed
     ///   - completion: Completion handler
-    func startRotationAnimation(finishIndex: Int, continuousRotationTime: Int, continuousRotationSpeed: CGFloat = 4, _ completion: ((Bool) -> Void)?) {
+    func startRotationAnimation(finishIndex: Int, addAnimation: Bool = false, animationColor: UIColor = .red, continuousRotationTime: Int, continuousRotationSpeed: CGFloat = 4, _ completion: ((Bool) -> Void)?) {
         let _index = finishIndex < self.slices.count ? finishIndex : self.slices.count - 1
         self.startContinuousRotationAnimation(with: continuousRotationSpeed)
         let deadline = DispatchTime.now() + DispatchTimeInterval.seconds(continuousRotationTime)
         DispatchQueue.main.asyncAfter(deadline: deadline) {
             self.startRotationAnimation(finishIndex: _index) { (finished) in
-                completion?(finished)
+                if addAnimation == false {
+                    completion?(finished)
+                } else {
+                    self.animateOpacityChanges(for: _index) {
+                        self.slices[_index].backgroundColor = animationColor
+                        completion?(finished)
+                    }
+                }
             }
         }
+    }
+
+    private func animateOpacityChanges(for index: Int, completion: @escaping () -> Void) {
+        var times = 5
+        func changeOpacity() {
+            UIView.animate(withDuration: 0.5, animations: {
+                if let currentColor = self.slices[index].backgroundColor {
+                    self.slices[index].backgroundColor = currentColor.withAlphaComponent(currentColor.cgColor.alpha == 1.0 ? 0.0 : 1.0)
+                }
+            }) { _ in
+                times -= 1
+                if times > 0 {
+                    changeOpacity()
+                } else {
+                    completion()
+                }
+            }
+        }
+        changeOpacity()
     }
     
     
@@ -625,8 +651,8 @@ public extension SwiftFortuneWheel {
     ///   - finishIndex: finished at index
     ///   - completion: completion
     @available(*, deprecated, message: "Use startRotationAnimation(finishIndex:continuousRotationTime:completion:) instead")
-    func startAnimating(indefiniteRotationTimeInSeconds: Int, finishIndex: Int, _ completion: ((Bool) -> Void)?) {
-        self.startRotationAnimation(finishIndex: finishIndex, continuousRotationTime: indefiniteRotationTimeInSeconds, completion)
+    func startAnimating(indefiniteRotationTimeInSeconds: Int, addAnimation: Bool = false, finishIndex: Int, _ completion: ((Bool) -> Void)?) {
+        self.startRotationAnimation(finishIndex: finishIndex, addAnimation: addAnimation, continuousRotationTime: indefiniteRotationTimeInSeconds, completion)
     }
     
     /// Starts rotation animation and stops rotation at the specified index and rotation angle offset
